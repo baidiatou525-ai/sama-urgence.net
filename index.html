@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMA URGENCE - Espace Partenaire</title>
+    <!-- Polices Premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Chart.js pour les graphiques interactifs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SDK Firebase de base (Compat/V9) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="partner-body">
+
+    <!-- ==========================================================================
+       1. INTERFACE DE CONNEXION PARTENAIRE (LOGIN)
+       ========================================================================== -->
+    <div id="loginSection" class="partner-login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <span class="badge-emergency">Portail Sécurisé</span>
+                <h2>SAMA URGENCE</h2>
+                <p>Espace Professionnel Santé & Ambulances</p>
+            </div>
+            
+            <form id="partnerLoginForm">
+                <div class="form-group">
+                    <label for="partnerEmail">Identifiant Professionnel (Email)</label>
+                    <input type="email" id="partnerEmail" class="form-control" placeholder="ex: contact@hopital-principal.sn" required>
+                </div>
+                <div class="form-group">
+                    <label for="partnerPassword">Mot de passe</label>
+                    <input type="password" id="partnerPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">
+                    Se connecter à l'espace expert
+                </button>
+            </form>
+            <div id="loginError" class="login-error-message" style="display: none;">
+                Identifiants incorrects. Veuillez réessayer.
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       2. TABLEAU DE BORD PARTENAIRE (Masqué par défaut)
+       ========================================================================== -->
+    <div id="dashboardSection" class="partner-dashboard" style="display: none;">
+        
+        <!-- Barre de Navigation Latérale ou Haute du Dashboard -->
+        <aside class="dashboard-sidebar">
+            <div class="sidebar-logo">
+                <span class="logo-title">SAMA URGENCE</span>
+                <span class="logo-subtitle">Partenaire PRO</span>
+            </div>
+            <div class="partner-profile-summary">
+                <div class="profile-avatar" id="partnerAvatar">H</div>
+                <div class="profile-info">
+                    <h4 id="partnerName">Hôpital Central de Démo</h4>
+                    <p id="partnerType">Structure de Santé Pivot</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link active">Tableau de bord</a>
+                <a href="index.html" class="sidebar-link logout-link" id="btnLogout">Déconnexion</a>
+            </nav>
+        </aside>
+
+        <!-- Contenu Principal Analytique -->
+        <main class="dashboard-content">
+            <header class="dashboard-header">
+                <div>
+                    <h1>Suivi des Performances Analytiques</h1>
+                    <p class="slogan-italic">"Réagir. Soigner. Sauver." — L'impact en temps réel sur votre activité.</p>
+                </div>
+                <div class="sync-status" id="dbStatus">
+                    <span class="status-dot pulsing"></span> Synchronisation Firestore Active
+                </div>
+            </header>
+
+            <!-- GRILLE DE CARTES KPI (Statistiques Flash) -->
+            <section class="kpi-grid">
+                <!-- KPI 1 -->
+                <div class="kpi-card">
+                    <p class="kpi-title">Demandes Reçues (Mois)</p>
+                    <h3 class="kpi-value" id="kpiTotalDemand">148</h3>
+                    <span class="kpi-trend positive">+12% vs mois dernier</span>
+                </div>
+                <!-- KPI 2 -->
+                <div class="kpi-card">
+                    <p class="kpi-title">Demandes Aujourd'hui</p>
+                    <h3 class="kpi-value" id="kpiTodayDemand">12</h3>
+                    <span class="kpi-subtext">Activité en cours</span>
+                </div>
+                <!-- KPI 3 -->
+                <div class="kpi-card">
+                    <p class="kpi-title">Temps Moyen de Réponse</p>
+                    <h3 class="kpi-value" id="kpiResponseTime">8.4 min</h3>
+                    <span class="kpi-trend positive">-1.2 min amélioration</span>
+                </div>
+                <!-- KPI 4 -->
+                <div class="kpi-card">
+                    <p class="kpi-title">Taux de Satisfaction</p>
+                    <h3 class="kpi-value" id="kpiSatisfaction">96.8%</h3>
+                    <span class="kpi-trend positive">★ Excellent</span>
+                </div>
+            </section>
+
+            <!-- GRILLE SECONDAIRE DE STATISTIQUES EN VOLUMES -->
+            <section class="stats-volume-grid">
+                <div class="volume-card">
+                    <h4>Interventions Réalisées</h4>
+                    <div class="volume-number text-medical" id="statSuccess">132</div>
+                    <p class="volume-desc">Prises en charge complètes et réussies.</p>
+                </div>
+                <div class="volume-card">
+                    <h4>Interventions Annulées</h4>
+                    <div class="volume-number text-emergency" id="statCancelled">16</div>
+                    <p class="volume-desc">Fausse alerte ou redirection amont.</p>
+                </div>
+                <div class="volume-card">
+                    <h4>Patients Orientés</h4>
+                    <div class="volume-number" id="statOriented" style="color: var(--blue-dark)">284</div>
+                    <p class="volume-desc">Régulés vers vos services spécialisés.</p>
+                </div>
+            </section>
+
+            <!-- ZONE DES GRAPHIQUES INTERACTIFS (CHART.JS) -->
+            <section class="charts-container-grid">
+                <!-- Graphique 1 : Évolution Mensuelle -->
+                <div class="chart-wrapper-card">
+                    <div class="chart-card-header">
+                        <h4>Évolution Mensuelle de l'Activité</h4>
+                        <p>Comparatif demandes vs interventions effectives</p>
+                    </div>
+                    <div class="chart-area">
+                        <canvas id="monthlyActivityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graphique 2 : Taux de Croissance & Comparaison -->
+                <div class="chart-wrapper-card">
+                    <div class="chart-card-header">
+                        <h4>Indicateur de Performance Trimestriel</h4>
+                        <p>Analyse de la croissance du réseau d'urgence</p>
+                    </div>
+                    <div class="chart-area">
+                        <canvas id="performanceComparisonChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script src="partenaire.js"></script>
+</body>
+</html>
