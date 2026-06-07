@@ -163,5 +163,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { threshold: 0.3 });
         statsObserver.observe(statsGrid);
-    }
+    }<script>
+document.getElementById("menuToggle").addEventListener("click", () => {
+    document.getElementById("navMenu").classList.toggle("active");
 });
+
+function filterFleet(type) {
+    const cards = document.querySelectorAll(".fleet-card");
+    cards.forEach(card => {
+        if (type === "all" || card.dataset.type === type) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+}
+</script>
+
