@@ -1,296 +1,167 @@
 /**
- * SAMA URGENCE - Script Espace Partenaire Professionnel
- * Intègre Chart.js et la passerelle d'écoute temps réel Firebase Firestore.
+ * SAMA URGENCE - Moteur d'Interaction JavaScript
+ * Spécifications : Performance, Accessibilité et Animations Fluides.
  */
 
-// ==========================================
-// CONFIGURATION CONFIG FIREBASE
-// ==========================================
-// Remplacez cet objet par les clés fournies dans la console Firebase
-const firebaseConfig = {
-    apiKey: "VOTRE_API_KEY_FIREBASE",
-    authDomain: "sama-urgence.firebaseapp.com",
-    projectId: "sama-urgence",
-    storageBucket: "sama-urgence.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567:web:abcde12345"
-};
+document.addEventListener('DOMContentLoaded', () => {
 
-// Initialisation conditionnelle de Firebase pour éviter les plantages si non configuré
-let db = null;
-try {
-    if (firebaseConfig.apiKey !== "VOTRE_API_KEY_FIREBASE") {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        console.log("SAMA URGENCE: Connexion Firestore établie avec succès.");
-    } else {
-        console.warn("SAMA URGENCE: Mode démonstration actif. (Clés Firebase manquantes)");
-    }
-} catch (error) {
-    console.error("Erreur d'initialisation Firebase:", error);
-}
+    // ==========================================
+    // 1. MENU MOBILE RESPONSIVE
+    // ==========================================
+    const menuToggle = document.querySelector('#menuToggle');
+    const navMenu = document.querySelector('#navMenu');
+    const navLinks = document.querySelectorAll('.nav-link');
 
-// Variables globales de contrôle des instances de graphiques
-let activityChartInstance = null;
-let performanceChartInstance = null;
-
-// ==========================================
-// GESTION DE L'AUTHENTIFICATION (SIMULÉE)
-// ==========================================
-const loginForm = document.getElementById('partnerLoginForm');
-const loginSection = document.getElementById('loginSection');
-const dashboardSection = document.getElementById('dashboardSection');
-const loginError = document.getElementById('loginError');
-const btnLogout = document.getElementById('btnLogout');
-
-if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById('partnerEmail').value;
-        const password = document.getElementById('partnerPassword').value;
-
-        // Démo Pro: Autorise l'accès pour l'évaluation immédiate
-        if (email && password.length >= 4) {
-            loginSection.style.display = 'none';
-            dashboardSection.style.display = 'grid';
+    if (menuToggle && navMenu) {
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
             
-            // Personnalisation dynamique du profil selon l'identifiant saisi
-            initPartnerProfile(email);
-            // Lancement de l'écosystème de données
-            initDashboardData();
+            // Empêcher le défilement du corps en arrière-plan lorsque le menu est ouvert
+            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+        });
+
+        // Fermeture automatique du menu lors du clic sur un lien
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                menuToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    }
+
+
+    // ==========================================
+    // 2. COMPORTEMENT DE L'EN-TÊTE AU SCROLL
+    // ==========================================
+    const header = document.querySelector('header');
+    const backToTopBtn = document.querySelector('#backToTop');
+
+    window.addEventListener('scroll', () => {
+        const scrollPos = window.scrollY;
+
+        // Effet de réduction de la navbar
+        if (scrollPos > 50) {
+            header.classList.add('scrolled');
         } else {
-            loginError.style.display = 'block';
+            header.classList.remove('scrolled');
+        }
+
+        // Affichage/Masquage du bouton Retour en Haut
+        if (backToTopBtn) {
+            if (scrollPos > 600) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
         }
     });
-}
 
-if (btnLogout) {
-    btnLogout.addEventListener('click', (e) => {
-        e.preventDefault();
-        dashboardSection.style.display = 'none';
-        loginSection.style.display = 'flex';
-        // Réinitialiser les champs
-        loginForm.reset();
-        loginError.style.display = 'none';
-    });
-}
 
-function initPartnerProfile(email) {
-    const pName = document.getElementById('partnerName');
-    const pType = document.getElementById('partnerType');
-    const pAvatar = document.getElementById('partnerAvatar');
-
-    if (email.includes('ambulance') || email.includes('samu')) {
-        pName.textContent = "SAMU National - Base Dakar";
-        pType.textContent = "Société d'Ambulance Régulatrice";
-        pAvatar.textContent = "S";
-        pAvatar.style.backgroundColor = "var(--red-emergency)";
-    } else {
-        pName.textContent = "Hôpital Principal de Dakar";
-        pType.textContent = "Centre de Traitement Trauma & Urgences";
-        pAvatar.textContent = "H";
-        pAvatar.style.backgroundColor = "var(--blue-medical)";
+    // ==========================================
+    // 3. RETOUR EN HAUT DE PAGE FLUIDE
+    // ==========================================
+    if (backToTopBtn) {
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     }
-}
 
-// ==========================================
-// ARCHITECTURE DES DONNÉES & GRAPHIQUES
-// ==========================================
-function initDashboardData() {
-    // 1. Données de base par défaut (Fallback Démo)
-    const demoData = {
-        totalDemand: 148,
-        todayDemand: 12,
-        responseTime: "8.4 min",
-        satisfaction: "96.8%",
-        successInterventions: 132,
-        cancelledInterventions: 16,
-        orientedPatients: 284,
-        // Historiques pour Chart.js (6 derniers mois)
-        months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin'],
-        demandsHistory: [90, 110, 95, 130, 122, 148],
-        successHistory: [82, 98, 84, 115, 110, 132]
-    };
 
-    // Mettre à jour l'interface visuelle immédiatement avec les données d'usine
-    renderKPIs(demoData);
-    buildCharts(demoData);
+    // ==========================================
+    // 4. SCROLL SPY & LIENS ACTIFS
+    // ==========================================
+    const sections = document.querySelectorAll('section[id]');
 
-    // 2. Branchement Firestore si disponible
-    if (db) {
-        syncWithFirestore();
-    }
-}
+    function scrollSpy() {
+        const currentScroll = window.scrollY + 120; // Décalage pour compenser la hauteur de la navbar
 
-// Injection des valeurs numériques dans le DOM
-function renderKPIs(data) {
-    document.getElementById('kpiTotalDemand').textContent = data.totalDemand;
-    document.getElementById('kpiTodayDemand').textContent = data.todayDemand;
-    document.getElementById('kpiResponseTime').textContent = data.responseTime;
-    document.getElementById('kpiSatisfaction').textContent = data.satisfaction;
-    document.getElementById('statSuccess').textContent = data.successInterventions;
-    document.getElementById('statCancelled').textContent = data.cancelledInterventions;
-    document.getElementById('statOriented').textContent = data.orientedPatients;
-}
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const sectionId = section.getAttribute('id');
+            const targetLink = document.querySelector(`.nav-menu a[href*="${sectionId}"]`);
 
-// Génération des courbes via Chart.js
-function buildCharts(data) {
-    // Nettoyage si réaffichage ultérieur
-    if (activityChartInstance) activityChartInstance.destroy();
-    if (performanceChartInstance) performanceChartInstance.destroy();
-
-    // Configuration Graphique 1 : Évolution Mensuelle (Lignes superposées)
-    const ctxActivity = document.getElementById('monthlyActivityChart').getContext('2d');
-    activityChartInstance = new Chart(ctxActivity, {
-        type: 'line',
-        data: {
-            labels: data.months,
-            datasets: [
-                {
-                    label: 'Demandes Reçues',
-                    data: data.demandsHistory,
-                    borderColor: '#0056D2', // Bleu Médical
-                    backgroundColor: 'rgba(0, 86, 210, 0.05)',
-                    fill: true,
-                    tension: 0.35,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#0056D2'
-                },
-                {
-                    label: 'Interventions Réalisées',
-                    data: data.successHistory,
-                    borderColor: '#071630', // Bleu Foncé
-                    backgroundColor: 'transparent',
-                    fill: false,
-                    tension: 0.2,
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointBackgroundColor: '#071630'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'top', labels: { font: { family: 'Montserrat', weight: 600 } } }
-            },
-            scales: {
-                y: { grid: { color: 'rgba(0,0,0,0.04)' }, beginAtZero: true }
-            }
-        }
-    });
-
-    // Configuration Graphique 2 : Performance & Taux de croissance (Histogramme Double)
-    const ctxPerf = document.getElementById('performanceComparisonChart').getContext('2d');
-    
-    // Calcul factice ou réel du taux de croissance basé sur les volumes
-    const growthRates = [0, 22, -13, 36, -6, 21]; 
-
-    performanceChartInstance = new Chart(ctxPerf, {
-        type: 'bar',
-        data: {
-            labels: data.months,
-            datasets: [
-                {
-                    label: 'Patients Orientés',
-                    data: data.demandsHistory.map(x => x * 2), // Équivalence proportionnelle
-                    backgroundColor: '#071630',
-                    borderRadius: 4
-                },
-                {
-                    label: 'Taux de Croissance (%)',
-                    data: growthRates,
-                    backgroundColor: '#E63946', // Rouge Urgence
-                    borderRadius: 4,
-                    type: 'line', // Mixte : Barres + Ligne d'évolution
-                    borderColor: '#E63946',
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'top' }
-            },
-            scales: {
-                y: { grid: { color: 'rgba(0,0,0,0.04)' } }
-            }
-        }
-    });
-}
-
-// ==========================================
-// CONVERGENCE FIRESTORE EN TEMPS RÉEL
-// ==========================================
-function syncWithFirestore() {
-    const statusBox = document.getElementById('dbStatus');
-    
-    // Écoute continue sur la collection maîtresse des requêtes d'ambulances
-    db.collection("demandes_urgence").onSnapshot((snapshot) => {
-        
-        // Notification visuelle de synchronisation
-        if(statusBox) {
-            statusBox.style.color = "#10B981";
-            statusBox.innerHTML = '<span class="status-dot pulsing"></span> Live Firestore Connecté';
-        }
-
-        let total = 0;
-        let aujourdhui = 0;
-        let annulees = 0;
-        let reussies = 0;
-
-        const dateDuJour = new Date().toDateString();
-
-        // Analyse algorithmique pas à pas de la collection à chaque mutation de la BDD
-        snapshot.forEach((doc) => {
-            const alerte = doc.data();
-            total++;
-
-            // Analyse de l'état du traitement
-            if (alerte.statut === "annule") {
-                annulees++;
-            } else if (alerte.statut === "termine" || alerte.statut === "valide") {
-                reussies++;
-            }
-
-            // Filtrage temporel pour les statistiques du jour (KPI 2)
-            if (alerte.timestamp) {
-                const dateAlerte = alerte.timestamp.toDate().toDateString();
-                if (dateAlerte === dateDuJour) {
-                    aujourdhui++;
+            if (targetLink) {
+                if (currentScroll >= sectionTop && currentScroll < sectionTop + sectionHeight) {
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    targetLink.classList.add('active');
                 }
             }
         });
+    }
+    window.addEventListener('scroll', scrollSpy);
 
-        // Extraction des métriques calculées et fusion avec les données historiques stables
-        const liveCalculatedData = {
-            totalDemand: total > 0 ? total : 148, // Fallback démo si la BDD Firestore démarre à vide
-            todayDemand: aujourdhui,
-            responseTime: "7.9 min", // Dans une architecture mature, calculé via : mean(alerte.heure_arrivee - alerte.heure_appel)
-            satisfaction: "97.2%",
-            successInterventions: reussies > 0 ? reussies : 132,
-            cancelledInterventions: annulees,
-            orientedPatients: Math.floor(reussies * 1.8),
+
+    // ==========================================
+    // 5. ANIMATION DES COMPTEURS STATISTIQUES
+    // ==========================================
+    const stats = document.querySelectorAll('.stat-number');
+    let statsAnimated = false;
+
+    function animateStats() {
+        stats.forEach(stat => {
+            const target = parseInt(stat.getAttribute('data-target'), 10);
+            const duration = 2000; // Durée globale de l'animation en millisecondes
+            const increment = target / (duration / 16); // Approximativement 60 images par seconde
             
-            // Conservation de l'historique graphique pour le rendu visuel
-            months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin'],
-            demandsHistory: [90, 110, 95, 130, 122, total > 0 ? total : 148],
-            successHistory: [82, 98, 84, 115, 110, reussies > 0 ? reussies : 132]
-        };
+            let current = 0;
 
-        // Actualisation dynamique immédiate des composants sans recharger la page
-        renderKPIs(liveCalculatedData);
-        buildCharts(liveCalculatedData);
+            const updateCount = () => {
+                current += increment;
+                if (current < target) {
+                    stat.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCount);
+                } else {
+                    stat.textContent = target; // S'assurer que le chiffre final est exact
+                }
+            };
+            updateCount();
+        });
+    }
 
-    }, (error) => {
-        console.error("Firestore synchronisation échec: ", error);
-        if(statusBox) {
-            statusBox.style.color = "var(--red-emergency)";
-            statusBox.innerHTML = '<span class="status-dot" style="background-color: var(--red-emergency)"></span> Erreur de liaison BDD';
-        }
+
+    // ==========================================
+    // 6. ANIMATION D'APPARITION AU SCROLL (Intersection Observer)
+    // ==========================================
+    const revealElements = document.querySelectorAll('.reveal-element');
+
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                
+                // Si l'élément intersecté contient les statistiques et qu'elles n'ont pas encore été animées
+                if (entry.target.classList.contains('stats-grid') && !statsAnimated) {
+                    animateStats();
+                    statsAnimated = true;
+                }
+                
+                observer.unobserve(entry.target); // Arrêter d'observer une fois l'élément affiché
+            }
+        });
+    }, {
+        threshold: 0.15, // L'élément doit être visible à 15% pour se déclencher
+        rootMargin: "0px 0px -50px 0px"
     });
-}
+
+    revealElements.forEach(element => {
+        revealObserver.observe(element);
+    });
+
+    // Optionnel : Si la section statistique est indépendante de la classe de révélation générale
+    const statsGrid = document.querySelector('.stats-grid');
+    if (statsGrid && !statsGrid.classList.contains('reveal-element')) {
+        const statsObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !statsAnimated) {
+                animateStats();
+                statsAnimated = true;
+            }
+        }, { threshold: 0.3 });
+        statsObserver.observe(statsGrid);
+    }
+});
